@@ -1,15 +1,3 @@
-/*
-Sobald mir das Dorfinternet Zugriff auf einen Compiler erlaubt soll dieses Programm folgendes können:
-	- Eine Template Datei einlesen
-	- "%MENU%" ersetzen mit einem korrekten Menu "<ul></ul>"
-	- Markdown Dateien in dem Ordner Pages in Unterseiten verwandeln
-	- index.md ist die Startseite, sie wird zu index.html
-	- Der Dateiname der Seiten ist auch ihr Titel und ihr Name im Menü (ausser index.md)
-	- Markdown Content ersetzt im Template "%PAGE%"
-	- Aufrufen tut man das Programm im Root der Seite, es generiert die fertige statische Seite im Ordner "generated"
-	- IDEE: Kein Markdown, einfach rohes HTML (erstmal) (möglicherweise Support für mehrere Formate)
-*/
-
 #include <iostream>
 #include <fstream>
 #include <vector>
@@ -31,7 +19,10 @@ std::string pageTemplate;
 
 std::string replace(std::string base, std::string find, std::string replace) {
 	std::size_t pos = base.find(find);
-	base.replace(pos, find.length(), replace);
+	while(pos != std::string::npos) {
+		base.replace(pos, find.length(), replace);
+		pos = base.find(find);
+	}
 	return base;
 }
 
@@ -59,6 +50,17 @@ std::vector<std::string> split(std::string string, char delimiter) {
 	return output;
 }
 
+std::string fileToString(std::string filename) {
+	std::ifstream file(filename);
+	std::string line;
+	std::string string;
+	while(std::getline(file, line)) {
+		string += line + "\n";
+	}
+	file.close();
+	return string;
+}
+
 int buildMenu() {
 	pageMenu = "<ul>";
 	for(size_t i = 0; i < pages.size(); i++) {
@@ -73,8 +75,9 @@ int buildMenu() {
 
 int buildPage(Page page) {
 	std::string pageStr = pageTemplate;
+	std::string content = fileToString("pages/" + page.filename);
 	pageStr = replace(pageStr, "$MENU", pageMenu);
-	pageStr = replace(pageStr, "$PAGE", "Hurensohn");
+	pageStr = replace(pageStr, "$PAGE", content);
 	pageStr = replace(pageStr, "$TITLE", page.title);
 	std::ofstream pageFile("generated/" + page.filename);
 	pageFile << pageStr;
@@ -100,12 +103,7 @@ int loadPages() {
 }
 
 int loadTemplate() {
-	std::ifstream templateFile("template.html");
-	std::string line;
-	while(std::getline(templateFile, line)) {
-		pageTemplate += line + "\n";
-	}
-	templateFile.close();
+	pageTemplate = fileToString("template.html");
 	return 0;
 }
 
