@@ -50,15 +50,22 @@ std::vector<std::string> split(std::string string, char delimiter) {
 	return output;
 }
 
-std::string fileToString(std::string filename) {
+int fileToString(std::string filename, std::string * out) {
+	if(out == NULL) {
+		return -2;
+	}
 	std::ifstream file(filename);
+	if(!file.is_open()) {
+		return -1;
+	}
 	std::string line;
 	std::string string;
 	while(std::getline(file, line)) {
 		string += line + "\n";
 	}
 	file.close();
-	return string;
+	*out = string;
+	return 0;
 }
 
 int buildMenu() {
@@ -75,11 +82,17 @@ int buildMenu() {
 
 int buildPage(Page page) {
 	std::string pageStr = pageTemplate;
-	std::string content = fileToString("pages/" + page.filename);
+	std::string content;
+	if(fileToString("pages/" + page.filename, &content) < 0) {
+		return -2;
+	}
 	pageStr = replace(pageStr, "$MENU", pageMenu);
 	pageStr = replace(pageStr, "$PAGE", content);
 	pageStr = replace(pageStr, "$TITLE", page.title);
 	std::ofstream pageFile("generated/" + page.filename);
+	if(!pageFile.is_open()) {
+		return -1;
+	}
 	pageFile << pageStr;
 	pageFile.flush();
 	pageFile.close();
@@ -89,6 +102,9 @@ int buildPage(Page page) {
 
 int loadPages() {
 	std::ifstream pagesFile("pages.txt");
+	if(!pagesFile.is_open()) {
+		return -1;
+	}
 	std::string line;
 	while(std::getline(pagesFile, line)) {
 		std::vector<std::string> values = split(line, '=');
@@ -103,15 +119,27 @@ int loadPages() {
 }
 
 int loadTemplate() {
-	pageTemplate = fileToString("template.html");
-	return 0;
+	return fileToString("template.html", &pageTemplate);
 }
 
 int main(int argc, char* argv[]) {
-	loadPages();
-	loadTemplate();
+	bool error = false;
+	if(loadPages() < 0) {
+		std::cout << "Error loading pages.txt" << std::endl;
+		error = true;
+	}
+	if(loadTemplate() < 0) {
+		std::cout << "Error loading template.html" << std::endl;
+		error = true;
+	}
+	if(error) {
+		return -1;
+	}
 	buildMenu();
 	for(size_t i = 0; i < pages.size(); i++) {
-		buildPage(pages[i]);
+		if(buildPage(pages[i]) < 0) {
+			std::cout << "Error writing page file generated/" << pages[i].filename << std::endl;
+		}
 	}
+	return 0;
 }
