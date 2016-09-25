@@ -3,14 +3,20 @@
 #include <vector>
 #include <string>
 
+#define VERSION_MAJOR 0
+#define VERSION_MINOR 2
+#define VERSION_PATCH 0
+
 class Page {
 	public:
-	Page(std::string newTitle, std::string newFilename) {
+	Page(std::string newTitle, std::string newFilename, bool newHidden) {
 		title = newTitle;
 		filename = newFilename;
+		hidden = newHidden;
 	}
 	std::string title;
 	std::string filename;
+	bool hidden;
 };
 
 std::vector<Page> pages;
@@ -71,6 +77,9 @@ int fileToString(std::string filename, std::string * out) {
 int buildMenu() {
 	pageMenu = "<ul>";
 	for(size_t i = 0; i < pages.size(); i++) {
+		if(pages[i].hidden) {
+			continue;
+		}
 		std::string temp = "<li><a href='$FILE'>$TITLE</a></li>";
 		temp = replace(temp, "$FILE", pages[i].filename);
 		temp = replace(temp, "$TITLE", pages[i].title);
@@ -102,6 +111,7 @@ int buildPage(Page page) {
 
 int loadPages() {
 	std::ifstream pagesFile("pages.txt");
+	std::string hiddenKeyword = "[HIDDEN]";
 	if(!pagesFile.is_open()) {
 		return -1;
 	}
@@ -111,7 +121,13 @@ int loadPages() {
 		if(values.size() == 2) {
 			std::string title = trim(values[0]);
 			std::string filename = trim(values[1]);
-			pages.push_back(Page(title, filename));
+			bool hidden = false;
+			size_t hiddenPos = title.find(hiddenKeyword, 0);
+			if(hiddenPos != std::string::npos) {
+				hidden = true;
+				title = replace(title, hiddenKeyword, "");
+			}
+			pages.push_back(Page(title, filename, hidden));
 		}
 	}
 	pagesFile.close();
@@ -123,6 +139,7 @@ int loadTemplate() {
 }
 
 int main(int argc, char* argv[]) {
+	std::cout << "mkpage " << VERSION_MAJOR << "." << VERSION_MINOR << "." << VERSION_PATCH << std::endl;
 	bool error = false;
 	if(loadPages() < 0) {
 		std::cout << "Error loading pages.txt" << std::endl;
