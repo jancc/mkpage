@@ -46,6 +46,9 @@ def buildPage(template, menu, page):
 	return
 	
 def buildPages(template, menu, pages):
+	if(not os.path.isdir("generated")):
+		os.makedirs("generated")
+	
 	for page in pages:
 		buildPage(template, menu, page)
 	return
