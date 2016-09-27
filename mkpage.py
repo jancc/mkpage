@@ -1,3 +1,4 @@
+#!/usr/bin/python
 from distutils.dir_util import copy_tree
 import os
 
