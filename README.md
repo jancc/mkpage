@@ -17,6 +17,7 @@ pages.txt
 ---------
 
 This file contains all pages you want to include. It has the following format:
+
     Title = name.html
     About Me = about.html
     Downloads = downloads.html
