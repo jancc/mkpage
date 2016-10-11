@@ -1,5 +1,6 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 from distutils.dir_util import copy_tree
+from sys import exit
 import os
 
 class Page:
@@ -10,7 +11,11 @@ class Page:
 
 def loadPagesList():
 	pages = []
-	pagesFile = open("pages.txt", "r")
+	try:
+		pagesFile = open("pages.txt", "r")
+	except IOError:
+		print("Error: No pages.txt found!")
+		exit()
 	content = pagesFile.read()
 	lines = content.splitlines()
 	for line in lines:
@@ -25,7 +30,11 @@ def loadPagesList():
 	return pages
 	
 def loadTemplate():
-	template = open("template.html", "r")
+	try:	
+		template = open("template.html", "r")
+	except IOError:
+		print("Error: No template.html found!")
+		exit()
 	return template.read()
 	
 def buildMenu(pages):
@@ -37,8 +46,16 @@ def buildMenu(pages):
 	return menu
 	
 def buildPage(template, menu, page):
-	source = open("pages/" + page.filename, "r")
-	dest = open("generated/" + page.filename, "w")
+	try:
+		source = open("pages/" + page.filename, "r")
+	except IOError:
+		print("Error: Failed to read pages/" + page.filename)
+		exit()
+	try:	
+		dest = open("generated/" + page.filename, "w")
+	except IOError:
+		print("Error: Failed to generate generated/" + page.filename)
+		exit()
 	generated = template
 	generated = generated.replace("$MENU", menu)
 	generated = generated.replace("$TITLE", page.title)
