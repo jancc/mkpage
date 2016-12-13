@@ -2,6 +2,7 @@
 from distutils.dir_util import copy_tree
 from sys import exit
 import os
+import json
 
 class Page:
 	def __init__(self, title, filename, hidden):
@@ -9,79 +10,70 @@ class Page:
 		self.filename = filename
 		self.hidden = hidden
 
-def loadPagesList():
-	pages = []
+def loadSiteConfig():
 	try:
-		pagesFile = open("pages.txt", "r")
+		siteFile = open("page.json", "r")
 	except IOError:
-		print("Error: No pages.txt found!")
+		print("Error: No pages.json found!")
 		exit()
-	content = pagesFile.read()
-	lines = content.splitlines()
-	for line in lines:
-		pagedata = line.split("=", 1)
-		if len(pagedata) == 2:
-			hidden = False
-			if "[HIDDEN]" in pagedata[0]:
-				hidden = True
-				pagedata[0] = pagedata[0].replace("[HIDDEN]", "")
-			page = Page(pagedata[0].strip(), pagedata[1].strip(), hidden)
-			pages.append(page)
-	return pages
-	
-def loadTemplate():
-	try:	
-		template = open("template.html", "r")
+	return json.load(siteFile)
+
+def loadTemplate(site):
+	try:
+		template = open(site["template"], "r")
 	except IOError:
-		print("Error: No template.html found!")
+		print("Error: file " + site["template"] + " not found!")
 		exit()
 	return template.read()
-	
-def buildMenu(pages):
+
+def buildMenu(site):
 	menu = "<ul>"
-	for page in pages:
-		if not page.hidden:
-			menu += "<li><a href='" + page.filename + "'>" + page.title + "</a></li>"
+	for page in site["pages"]:
+		if not "hidden" in page or page["hidden"] == "false":
+			menu += "<li><a href='" + page["file"] + "'>" + page["title"] + "</a></li>"
 	menu += "</ul>"
 	return menu
-	
-def buildPage(template, menu, page):
+
+def buildPage(template, menu, page, site):
 	try:
-		source = open("pages/" + page.filename, "r")
+		source = open("pages/" + page["file"], "r")
 	except IOError:
-		print("Error: Failed to read pages/" + page.filename)
+		print("Error: Failed to read pages/" + page["file"])
 		exit()
-	try:	
-		dest = open("generated/" + page.filename, "w")
+	try:
+		dest = open("generated/" + page["file"], "w")
 	except IOError:
-		print("Error: Failed to generate generated/" + page.filename)
+		print("Error: Failed to generate generated/" + page["file"])
 		exit()
 	generated = template
 	generated = generated.replace("$MENU", menu)
-	generated = generated.replace("$TITLE", page.title)
+	generated = generated.replace("$TITLE", site["title"])
+	generated = generated.replace("$SUBTITLE", site["subtitle"])
+	generated = generated.replace("$AUTHOR", site["author"])
+	generated = generated.replace("$PAGETITLE", page["title"])
 	generated = generated.replace("$PAGE", source.read())
 	dest.write(generated)
 	return
-	
-def buildPages(template, menu, pages):
+
+def buildPages(template, menu, site):
 	if(not os.path.isdir("generated")):
 		os.makedirs("generated")
-	
-	for page in pages:
-		buildPage(template, menu, page)
+
+	for page in site["pages"]:
+		buildPage(template, menu, page, site)
 	return
-	
+
 def copyAssets():
 	if(os.path.isdir("assets")):
 		copy_tree("assets", "generated")
 	return
-	
+
 def mkpage():
-	pages = loadPagesList()
-	template = loadTemplate()
-	menu = buildMenu(pages)
-	buildPages(template, menu, pages)
+	site = loadSiteConfig()
+	template = loadTemplate(site)
+	menu = buildMenu(site)
+	buildPages(template, menu, site)
 	copyAssets()
 	return
-	
+
 mkpage()
