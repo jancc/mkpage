@@ -3,6 +3,7 @@ from distutils.dir_util import copy_tree
 from sys import exit
 import os
 import json
+import datetime
 
 class Page:
 	def __init__(self, title, filename, hidden):
@@ -52,6 +53,8 @@ def buildPage(template, menu, page, site):
 	generated = generated.replace("$AUTHOR", site["author"])
 	generated = generated.replace("$PAGETITLE", page["title"])
 	generated = generated.replace("$PAGE", source.read())
+	now = datetime.datetime.now()
+	generated = generated.replace("$YEAR", str(now.year))
 	dest.write(generated)
 	return
 
