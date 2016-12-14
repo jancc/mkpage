@@ -5,12 +5,6 @@ import os
 import json
 import datetime
 
-class Page:
-	def __init__(self, title, filename, hidden):
-		self.title = title
-		self.filename = filename
-		self.hidden = hidden
-
 def loadSiteConfig():
 	try:
 		siteFile = open("page.json", "r")
@@ -46,8 +40,7 @@ def buildPage(template, menu, page, site):
 	except IOError:
 		print("Error: Failed to generate generated/" + page["file"])
 		exit()
-	generated = template
-	generated = generated.replace("$MENU", menu)
+	generated = template.replace("$MENU", menu)
 	generated = generated.replace("$TITLE", site["title"])
 	generated = generated.replace("$SUBTITLE", site["subtitle"])
 	generated = generated.replace("$AUTHOR", site["author"])
