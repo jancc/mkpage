@@ -5,71 +5,96 @@ import os
 import json
 import datetime
 
-def loadSiteConfig():
-	try:
-		siteFile = open("page.json", "r")
-	except IOError:
-		print("Error: No pages.json found!")
-		exit()
-	return json.load(siteFile)
+class Site():
+	def __init__(self, file):
+		config = self.loadConfig(file)
+		menu = self.buildMenu()
+		if self.hasBlog():
+			overview = self.buildBlogOverview()
+		template = self.loadTemplate()
 
-def loadTemplate(site):
-	try:
-		template = open(site["template"], "r")
-	except IOError:
-		print("Error: file " + site["template"] + " not found!")
-		exit()
-	return template.read()
+	def loadConfig(self, file):
+		try:
+			configFile = open(file, "r")
+		except IOError:
+			print("Error: No file: " + file + " found!")
+			exit()
+		self.config = json.load(configFile)
 
-def buildMenu(site):
-	menu = "<ul>"
-	for page in site["pages"]:
-		if not "hidden" in page or page["hidden"] == "false":
-			menu += "<li><a href='" + page["file"] + "'>" + page["title"] + "</a></li>"
-	menu += "</ul>"
-	return menu
+	def loadTemplate(self):
+		try:
+			templateFile = open(self.config["template"], "r")
+		except IOError:
+			print("Error: file " + self.config["template"] + " not found!")
+			exit()
+		self.template = templateFile.read()
 
-def buildPage(template, menu, page, site):
-	try:
-		source = open("pages/" + page["file"], "r")
-	except IOError:
-		print("Error: Failed to read pages/" + page["file"])
-		exit()
-	try:
-		dest = open("generated/" + page["file"], "w")
-	except IOError:
-		print("Error: Failed to generate generated/" + page["file"])
-		exit()
-	generated = template.replace("$MENU", menu)
-	generated = generated.replace("$TITLE", site["title"])
-	generated = generated.replace("$SUBTITLE", site["subtitle"])
-	generated = generated.replace("$AUTHOR", site["author"])
-	generated = generated.replace("$PAGETITLE", page["title"])
-	generated = generated.replace("$PAGE", source.read())
-	now = datetime.datetime.now()
-	generated = generated.replace("$YEAR", str(now.year))
-	dest.write(generated)
-	return
+	def buildMenu(self):
+		menu = "<ul>"
+		for page in self.config["pages"]:
+			if not "hidden" in page or page["hidden"] == "false":
+				menu += "<li><a href='" + page["file"] + "'>" + page["title"] + "</a></li>"
+		menu += "</ul>"
+		self.menu = menu
 
-def buildPages(template, menu, site):
-	if(not os.path.isdir("generated")):
-		os.makedirs("generated")
+	def buildBlogOverview(self):
+		overview = "<ul>"
+		for post in self.config["blog"]["posts"]:
+			overview += "<li><a href='" + post["file"] + "'>" + post["title"] + "</a></li>"
+		overview += "</ul>"
+		self.overview = overview
 
-	for page in site["pages"]:
-		buildPage(template, menu, page, site)
-	return
+	def buildPage(self, folder, file, title):
+		try:
+			source = open(folder + "/" + file, "r")
+		except IOError:
+			print("Error: Failed to read " + folder + "/" + file)
+			exit()
+		try:
+			dest = open("generated/" + file, "w")
+		except IOError:
+			print("Error: Failed to generate generated/" + file)
+			exit()
+		generated = self.template.replace("$CONTENT", source.read())
+		generated = generated.replace("$MENU", self.menu)
+		if self.hasBlog():
+			generated = generated.replace("$BLOGOVERVIEW", self.overview)
+		generated = generated.replace("$TITLE", self.config["title"])
+		generated = generated.replace("$SUBTITLE", self.config["subtitle"])
+		generated = generated.replace("$AUTHOR", self.config["author"])
+		generated = generated.replace("$PAGETITLE", title)
+		now = datetime.datetime.now()
+		generated = generated.replace("$YEAR", str(now.year))
+		dest.write(generated)
+		return
 
-def copyAssets():
-	if(os.path.isdir("assets")):
-		copy_tree("assets", "generated")
-	return
+	def buildPages(self):
+		for page in self.config["pages"]:
+			self.buildPage("pages", page["file"], page["title"])
+		return
+
+	def buildBlog(self):
+		for post in self.config["blog"]["posts"]:
+			self.buildPage("posts", post["file"], post["title"])
+		return
+
+	def hasBlog(self):
+		return "blog" in self.config
+
+	def copyAssets(self):
+		if(os.path.isdir("assets")):
+			copy_tree("assets", "generated")
+		return
 
 def mkpage():
-	site = loadSiteConfig()
-	template = loadTemplate(site)
-	menu = buildMenu(site)
-	buildPages(template, menu, site)
-	copyAssets()
+	site = Site("page.json")
+
+	if not os.path.isdir("generated"):
+		os.makedirs("generated")
+	site.buildPages()
+	if site.hasBlog():
+		site.buildBlog()
+	site.copyAssets()
 	return
 
 mkpage()
