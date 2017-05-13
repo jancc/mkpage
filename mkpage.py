@@ -32,16 +32,16 @@ class Site():
 	def buildMenu(self):
 		menu = "<ul>"
 		for page in self.config["pages"]:
-			if not "hidden" in page or page["hidden"] == "false":
+			if not "hidden" in page or page["hidden"] == False:
 				menu += "<li><a href='" + page["file"] + "'>" + page["title"] + "</a></li>"
 		menu += "</ul>"
 		self.menu = menu
 
 	def buildBlogOverview(self):
-		overview = "<ul>"
+		overview = "<ol reversed>"
 		for post in self.config["blog"]["posts"]:
 			overview += "<li><a href='" + post["file"] + "'>" + post["title"] + "</a></li>"
-		overview += "</ul>"
+		overview += "</ol>"
 		self.overview = overview
 
 	def buildPage(self, folder, file, title):
