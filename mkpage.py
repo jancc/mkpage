@@ -4,11 +4,13 @@ from sys import exit
 import os
 import json
 import datetime
+import argparse
 
 class Site():
-	def __init__(self, file):
+	def __init__(self, file, output):
 		config = self.loadConfig(file)
 		menu = self.buildMenu()
+		self.output = output
 		if self.hasBlog():
 			overview = self.buildBlogOverview()
 		template = self.loadTemplate()
@@ -51,9 +53,9 @@ class Site():
 			print("Error: Failed to read " + folder + "/" + file)
 			exit()
 		try:
-			dest = open("generated/" + file, "w")
+			dest = open(os.path.join(self.output, file), "w")
 		except IOError:
-			print("Error: Failed to generate generated/" + file)
+			print("Error: Failed to generate " + self.output +  "/" + file)
 			exit()
 		generated = self.template.replace("$CONTENT", source.read())
 		generated = generated.replace("$MENU", self.menu)
@@ -69,6 +71,8 @@ class Site():
 		return
 
 	def buildPages(self):
+		if not os.path.isdir(self.output):
+			os.makedirs(self.output)
 		for page in self.config["pages"]:
 			self.buildPage("pages", page["file"], page["title"])
 		return
@@ -83,14 +87,21 @@ class Site():
 
 	def copyAssets(self):
 		if(os.path.isdir("assets")):
-			copy_tree("assets", "generated")
+			copy_tree("assets", self.output)
 		return
 
 def mkpage():
-	site = Site("page.json")
+	argparser = argparse.ArgumentParser(description="Very simple static site generator.")
+	argparser.add_argument("-o", "--out",
+						  help="Directory to output generated files (default: 'generated')",
+						  default="generated")
+	argparser.add_argument("-f", "--file",
+						  help="Path to JSON file that describes your page (default: 'page.json')",
+						  default="page.json")
+	args = argparser.parse_args()
 
-	if not os.path.isdir("generated"):
-		os.makedirs("generated")
+	site = Site(args.file, args.out)
+
 	site.buildPages()
 	if site.hasBlog():
 		site.buildBlog()
