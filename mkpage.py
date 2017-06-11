@@ -9,7 +9,6 @@ import argparse
 class Site():
 	def __init__(self, file, output):
 		config = self.loadConfig(file)
-		menu = self.buildMenu()
 		self.output = output
 		if self.hasBlog():
 			overview = self.buildBlogOverview()
@@ -31,13 +30,21 @@ class Site():
 			exit()
 		self.template = templateFile.read()
 
-	def buildMenu(self):
+	def isHidden(self, page):
+		try:
+			return page["hidden"]
+		except KeyError:
+			return False
+
+	def buildMenu(self, currentPage):
 		menu = "<ul>"
 		for page in self.config["pages"]:
-			if not "hidden" in page or page["hidden"] == False:
+			if not self.isHidden(page) and page != currentPage:
 				menu += "<li><a href='" + page["file"] + "'>" + page["title"] + "</a></li>"
+			elif not self.isHidden(page):
+				menu += "<li>" + page["title"] + "</li>"
 		menu += "</ul>"
-		self.menu = menu
+		return menu
 
 	def buildBlogOverview(self):
 		overview = "<ol reversed>"
@@ -46,25 +53,26 @@ class Site():
 		overview += "</ol>"
 		self.overview = overview
 
-	def buildPage(self, folder, file, title):
+	def buildPage(self, folder, page):
 		try:
-			source = open(folder + "/" + file, "r")
+			source = open(folder + "/" + page["file"], "r")
 		except IOError:
-			print("Error: Failed to read " + folder + "/" + file)
+			print("Error: Failed to read " + folder + "/" + page["file"])
 			exit()
 		try:
-			dest = open(os.path.join(self.output, file), "w")
+			dest = open(os.path.join(self.output, page["file"]), "w")
 		except IOError:
-			print("Error: Failed to generate " + self.output +  "/" + file)
+			print("Error: Failed to generate " + self.output +  "/" + page["file"])
 			exit()
 		generated = self.template.replace("$CONTENT", source.read())
-		generated = generated.replace("$MENU", self.menu)
+		menu = self.buildMenu(page)
+		generated = generated.replace("$MENU", menu)
 		if self.hasBlog():
 			generated = generated.replace("$BLOGOVERVIEW", self.overview)
 		generated = generated.replace("$TITLE", self.config["title"])
 		generated = generated.replace("$SUBTITLE", self.config["subtitle"])
 		generated = generated.replace("$AUTHOR", self.config["author"])
-		generated = generated.replace("$PAGETITLE", title)
+		generated = generated.replace("$PAGETITLE", page["title"])
 		now = datetime.datetime.now()
 		generated = generated.replace("$YEAR", str(now.year))
 		dest.write(generated)
@@ -74,12 +82,12 @@ class Site():
 		if not os.path.isdir(self.output):
 			os.makedirs(self.output)
 		for page in self.config["pages"]:
-			self.buildPage("pages", page["file"], page["title"])
+			self.buildPage("pages", page)
 		return
 
 	def buildBlog(self):
 		for post in self.config["blog"]["posts"]:
-			self.buildPage("posts", post["file"], post["title"])
+			self.buildPage("posts", post)
 		return
 
 	def hasBlog(self):
