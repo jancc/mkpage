@@ -7,9 +7,10 @@ import datetime
 import argparse
 
 class Site():
-	def __init__(self, file, output):
-		config = self.loadConfig(file)
+	def __init__(self, file, output, workingDirectory):
 		self.output = output
+		self.workingDirectory = workingDirectory
+		config = self.loadConfig(os.path.join(workingDirectory, file))
 		if self.hasBlog():
 			overview = self.buildBlogOverview()
 		template = self.loadTemplate()
@@ -23,10 +24,11 @@ class Site():
 		self.config = json.load(configFile)
 
 	def loadTemplate(self):
+		configFilename = os.path.join(self.workingDirectory, self.config["template"])
 		try:
-			templateFile = open(self.config["template"], "r")
+			templateFile = open(configFilename, "r")
 		except IOError:
-			print("Error: file " + self.config["template"] + " not found!")
+			print("Error: file " + configFilename + " not found!")
 			exit()
 		self.template = templateFile.read()
 
@@ -48,7 +50,7 @@ class Site():
 
 	def buildBlogOverview(self):
 		overview = "<ol reversed>"
-		for post in self.config["blog"]["posts"]:
+		for post in reversed(self.config["blog"]["posts"]):
 			overview += "<li><a href='" + post["file"] + "'>" + post["title"] + "</a></li>"
 		overview += "</ol>"
 		self.overview = overview
@@ -82,20 +84,20 @@ class Site():
 		if not os.path.isdir(self.output):
 			os.makedirs(self.output)
 		for page in self.config["pages"]:
-			self.buildPage("pages", page)
+			self.buildPage(os.path.join(self.workingDirectory, "pages"), page)
 		return
 
 	def buildBlog(self):
 		for post in self.config["blog"]["posts"]:
-			self.buildPage("posts", post)
+			self.buildPage(os.path.join(self.workingDirectory, "posts"), post)
 		return
 
 	def hasBlog(self):
 		return "blog" in self.config
 
 	def copyAssets(self):
-		if(os.path.isdir("assets")):
-			copy_tree("assets", self.output)
+		if(os.path.isdir(os.path.join(self.workingDirectory, "assets"))):
+			copy_tree(os.path.join(self.workingDirectory, "assets"), self.output)
 		return
 
 def mkpage():
@@ -106,9 +108,12 @@ def mkpage():
 	argparser.add_argument("-f", "--file",
 						  help="Path to JSON file that describes your page (default: 'page.json')",
 						  default="page.json")
+	argparser.add_argument("-d", "--directory",
+						  help="Path to directory that includes your files (default: current directory)",
+						  default=os.getcwd())
 	args = argparser.parse_args()
 
-	site = Site(args.file, args.out)
+	site = Site(args.file, args.out, args.directory)
 
 	site.buildPages()
 	if site.hasBlog():
