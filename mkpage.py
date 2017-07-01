@@ -66,17 +66,17 @@ class Site():
 		except IOError:
 			print("Error: Failed to generate " + self.output +  "/" + page["file"])
 			exit()
-		generated = self.template.replace("$CONTENT", source.read())
+		generated = self.template.replace("$PAGE$", source.read())
 		menu = self.buildMenu(page)
-		generated = generated.replace("$MENU", menu)
+		generated = generated.replace("$MENU$", menu)
 		if self.hasBlog():
-			generated = generated.replace("$BLOGOVERVIEW", self.overview)
-		generated = generated.replace("$TITLE", self.config["title"])
-		generated = generated.replace("$SUBTITLE", self.config["subtitle"])
-		generated = generated.replace("$AUTHOR", self.config["author"])
-		generated = generated.replace("$PAGETITLE", page["title"])
+			generated = generated.replace("$BLOGOVERVIEW$", self.overview)
+		generated = generated.replace("$TITLE$", self.config["title"])
+		generated = generated.replace("$SUBTITLE$", self.config["subtitle"])
+		generated = generated.replace("$AUTHOR$", self.config["author"])
+		generated = generated.replace("$PAGETITLE$", page["title"])
 		now = datetime.datetime.now()
-		generated = generated.replace("$YEAR", str(now.year))
+		generated = generated.replace("$YEAR$", str(now.year))
 		dest.write(generated)
 		return
 
