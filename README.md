@@ -28,11 +28,11 @@ The [HIDDEN] flag can be added. It allows you to generate pages, but not include
 template.html
 -------------
 
-This file should just be a regular html file, complete with <html> tags and a doctype.
-Place "$MENU" in your template, where you want your navigation to be (it is a <ul> filled with links).
-The page's title will be placed at "$TITLE" and the page's actual content will be placed at "$PAGE".
+This file should just be a regular html file, complete with &lt;html&gt; tags and a doctype.
+Place "$MENU" in your template, where you want your navigation to be (it is a &lt;ul&gt; filled with links).
+The page's title will be placed at "$TITLE$" and the page's actual content will be placed at "$PAGE$".
 
 pages
 -----
 
-A page file must only contain tags, that would make sense in it's position in the template. So no <html>, <body> or anything.
+A page file must only contain tags, that would make sense in it's position in the template. So no &lt;html&gt;, &lt;body&gt; or anything.
