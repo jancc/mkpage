@@ -1,4 +1,4 @@
-Copyright (c) 2016 Jan Wolff
+Copyright (c) 2016-2017 Jan Wolff
 
 This software is provided 'as-is', without any express or implied warranty. In no event will the authors be held liable for any damages arising from the use of this software.
 

@@ -7,13 +7,13 @@ import json
 import datetime
 import argparse
 
+__version__ = "0.2.0"
+
 class Site():
 	def __init__(self, file, output, workingDirectory):
 		self.output = output
 		self.workingDirectory = workingDirectory
 		config = self.loadConfig(os.path.join(workingDirectory, file))
-		if self.hasBlog():
-			overview = self.buildBlogOverview()
 		template = self.loadTemplate()
 
 	"""
@@ -64,16 +64,6 @@ class Site():
 		return menu
 
 	"""
-	Prepare the blog postings as a reverse numbered list.
-	"""
-	def buildBlogOverview(self):
-		overview = "<ol reversed>"
-		for post in reversed(self.config["blog"]["posts"]):
-			overview += "<li><a href='" + post["file"] + "'>" + post["title"] + "</a></li>"
-		overview += "</ol>"
-		self.overview = overview
-
-	"""
 	Prepare a single page by first putting it inside the template and then
 	loading all other definitions.
 	"""
@@ -91,8 +81,6 @@ class Site():
 		generated = self.template.replace("$PAGE$", source.read())
 		menu = self.buildMenu(page)
 		generated = generated.replace("$MENU$", menu)
-		if self.hasBlog():
-			generated = generated.replace("$BLOGOVERVIEW$", self.overview)
 		generated = generated.replace("$TITLE$", self.config["title"])
 		generated = generated.replace("$SUBTITLE$", self.config["subtitle"])
 		generated = generated.replace("$AUTHOR$", self.config["author"])
@@ -111,20 +99,6 @@ class Site():
 		for page in self.config["pages"]:
 			self.buildPage(os.path.join(self.workingDirectory, "pages"), page)
 		return
-
-	"""
-	Build all pages that belong to the blog.
-	"""
-	def buildBlog(self):
-		for post in self.config["blog"]["posts"]:
-			self.buildPage(os.path.join(self.workingDirectory, "posts"), post)
-		return
-
-	"""
-	Retruns wether this page has a "blog" section in it's config.
-	"""
-	def hasBlog(self):
-		return "blog" in self.config
 
 	"""
 	Copy all files in the "assets" folder into the generated folder.
@@ -150,9 +124,8 @@ def mkpage():
 	site = Site(args.file, args.out, args.directory)
 
 	site.buildPages()
-	if site.hasBlog():
-		site.buildBlog()
 	site.copyAssets()
 	return
 
-mkpage()
+if __name__ == "__main__":
+	mkpage()
