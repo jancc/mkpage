@@ -15,7 +15,7 @@ try:
 except ImportError as e:
     useMarkdown = False
 
-__version__ = "0.2.0"
+__version__ = "0.3.0"
 
 class Site():
     def __init__(self, file, output, workingDirectory):
