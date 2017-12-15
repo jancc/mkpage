@@ -84,7 +84,9 @@ class Site():
             exit()
         htmlPage = ""
         filename, filetype = os.path.splitext(page["file"])
+        # always do lowercase comparisions for file extensions to make them case insensitive
         filetype = filetype.lower()
+        # either write html directly into output or parse
         if filetype == ".html" or filetype == ".htm":
             htmlPage = source.read()
         elif useMarkdown and filetype == ".md":
