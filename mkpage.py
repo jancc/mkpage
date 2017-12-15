@@ -7,6 +7,14 @@ import json
 import datetime
 import argparse
 
+useMarkdown = False
+
+try:
+    import markdown
+    useMarkdown = True
+except ImportError as e:
+    useMarkdown = False
+
 __version__ = "0.2.0"
 
 class Site():
@@ -57,7 +65,8 @@ class Site():
         menu = "<ul>"
         for page in self.config["pages"]:
             if not self.isHidden(page) and page != currentPage:
-                menu += "<li><a href='" + page["file"] + "'>" + page["title"] + "</a></li>"
+                filename, filetype = os.path.splitext(page["file"])
+                menu += "<li><a href='" + "%s.html" % filename + "'>" + page["title"] + "</a></li>"
             elif not self.isHidden(page):
                 menu += "<li><a class='nav_active' href='" + page["file"] + "'>" + page["title"] + "</a></li>"
         menu += "</ul>"
@@ -69,16 +78,25 @@ class Site():
     """
     def buildPage(self, folder, page):
         try:
-            source = open(folder + "/" + page["file"], "r")
+            source = open(os.path.join(folder, page["file"]), "r")
         except IOError:
-            print("Error: Failed to read " + folder + "/" + page["file"])
+            print("Error: Failed to read " + os.path.join(folder, page["file"]))
             exit()
+        htmlPage = ""
+        filename, filetype = os.path.splitext(page["file"])
+        filetype = filetype.lower()
+        if filetype == ".html" or filetype == ".htm":
+            htmlPage = source.read()
+        elif useMarkdown and filetype == ".md":
+            htmlPage = markdown.markdown(source.read())
+        else:
+            print("Unknown file type in page: %s" % page["file"])
         try:
-            dest = open(os.path.join(self.output, page["file"]), "w")
+            dest = open(os.path.join(self.output, "%s.html" % filename), "w")
         except IOError:
             print("Error: Failed to generate " + self.output +  "/" + page["file"])
             exit()
-        generated = self.template.replace("$PAGE$", source.read())
+        generated = self.template.replace("$PAGE$", htmlPage)
         menu = self.buildMenu(page)
         generated = generated.replace("$MENU$", menu)
         generated = generated.replace("$TITLE$", self.config["title"])
@@ -88,6 +106,9 @@ class Site():
         now = datetime.datetime.now()
         generated = generated.replace("$YEAR$", str(now.year))
         dest.write(generated)
+        dest.flush()
+        dest.close()
+        source.close()
         return
 
     """
