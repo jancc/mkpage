@@ -64,11 +64,11 @@ class Site():
     def buildMenu(self, currentPage):
         menu = "<ul>"
         for page in self.config["pages"]:
+            filename, filetype = os.path.splitext(page["file"])
             if not self.isHidden(page) and page != currentPage:
-                filename, filetype = os.path.splitext(page["file"])
                 menu += "<li><a href='" + "%s.html" % filename + "'>" + page["title"] + "</a></li>"
             elif not self.isHidden(page):
-                menu += "<li><a class='nav_active' href='" + page["file"] + "'>" + page["title"] + "</a></li>"
+                menu += "<li><a class='nav_active' href='" + "%s.html" % filename + "'>" + page["title"] + "</a></li>"
         menu += "</ul>"
         return menu
 
